@@ -26,7 +26,7 @@ export default function Navbar() {
     if (cached) {
       try { setUser(JSON.parse(cached)); } catch {}
     } else {
-      apiClient.get('/auth/me').then(res => {
+      apiClient.get('/auth/me/').then(res => {
         setUser(res.data);
         localStorage.setItem('nav_user', JSON.stringify(res.data));
       }).catch(() => {});

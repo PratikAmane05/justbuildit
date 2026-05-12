@@ -130,8 +130,8 @@ export default function Tasks() {
         apiClient.get("/tasks/"),
         apiClient.get("/projects/"),
       ]);
-      setTasks(tRes.data);
-      setProjects(pRes.data);
+      setTasks(Array.isArray(tRes.data) ? tRes.data : []);
+      setProjects(Array.isArray(pRes.data) ? pRes.data : []);
       if (pRes.data.length > 0) {
         setTaskProject(pRes.data[0].id);
         setAiProject(pRes.data[0].id);

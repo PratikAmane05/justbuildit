@@ -144,7 +144,7 @@ export default function ProjectDetail() {
         apiClient.get(`/tasks/?project_id=${id}`),
       ]);
       setProject(pRes.data);
-      setTasks(tRes.data);
+      setTasks(Array.isArray(tRes.data) ? tRes.data : []);
     } catch {
       navigate("/projects");
     } finally {

@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = True
     BACKEND_PUBLIC_URL: str = "http://localhost:8002"  # Change to your ngrok URL locally
+    FRONTEND_URL: str = "https://justbuilditai.vercel.app"  # Production Vercel URL
+    SECRET_KEY: str = "changeme-secret"
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/justbuildit"

@@ -49,7 +49,7 @@ async def create_task(
     return await svc.create(payload)
 
 
-@router.get("/{task_id}", response_model=TaskOut)
+@router.get("/{task_id}/", response_model=TaskOut)
 async def get_task(
     task_id: str,
     db: AsyncSession = Depends(get_db),
@@ -62,7 +62,7 @@ async def get_task(
     return task
 
 
-@router.put("/{task_id}", response_model=TaskOut)
+@router.put("/{task_id}/", response_model=TaskOut)
 async def update_task(
     task_id: str,
     payload: TaskUpdate,
@@ -73,7 +73,7 @@ async def update_task(
     return await svc.update(task_id, payload)
 
 
-@router.patch("/{task_id}/status", response_model=TaskOut)
+@router.patch("/{task_id}/status/", response_model=TaskOut)
 async def update_task_status(
     task_id: str,
     payload: TaskStatusUpdate,
@@ -84,7 +84,7 @@ async def update_task_status(
     return await svc.update_status(task_id, payload.status)
 
 
-@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{task_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     task_id: str,
     db: AsyncSession = Depends(get_db),
@@ -188,7 +188,7 @@ Rules:
 
 
 
-@router.post("/ai-generate", response_model=AIGenerateResponse)
+@router.post("/ai-generate/", response_model=AIGenerateResponse)
 async def ai_generate_tasks(
     payload: AIGenerateRequest,
     user_id: str = Depends(get_current_user_id),

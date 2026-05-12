@@ -13,14 +13,14 @@ from app.core.config import settings
 router = APIRouter()
 
 
-@router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("/register/", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
     svc = AuthService(db)
     user = await svc.register(payload.name, payload.email, payload.password)
     return {"id": user.id, "email": user.email, "message": "Account created successfully"}
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login/", response_model=TokenResponse)
 async def login(payload: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
     svc = AuthService(db)
     user = await svc.authenticate(payload.email, payload.password)
@@ -40,7 +40,7 @@ async def login(payload: LoginRequest, request: Request, db: AsyncSession = Depe
     )
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post("/refresh/", response_model=TokenResponse)
 async def refresh(payload: RefreshRequest):
     try:
         data = decode_token(payload.refresh_token)
@@ -55,7 +55,7 @@ async def refresh(payload: RefreshRequest):
     )
 
 
-@router.get("/me")
+@router.get("/me/")
 async def me(user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     svc = AuthService(db)
     user = await svc.get_by_id(user_id)
@@ -64,7 +64,7 @@ async def me(user_id: str = Depends(get_current_user_id), db: AsyncSession = Dep
     return {"id": user.id, "name": user.name, "email": user.email, "avatar_url": user.avatar_url}
 
 
-@router.patch("/me")
+@router.patch("/me/")
 async def update_me(payload: ProfileUpdate, user_id: str = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     svc = AuthService(db)
     user = await svc.update_profile(

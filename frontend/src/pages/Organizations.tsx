@@ -114,7 +114,7 @@ function OrgCard({ org, currentUserId }: { org: any; currentUserId: string }) {
   const fetchMembers = async () => {
     setLoadingMembers(true);
     try {
-      const res = await apiClient.get(`/organizations/${org.id}/members`);
+      const res = await apiClient.get(`/organizations/${org.id}/members/`);
       setMembers(res.data);
     } catch {
     } finally {
@@ -133,7 +133,7 @@ function OrgCard({ org, currentUserId }: { org: any; currentUserId: string }) {
     setInviteError("");
     setInviteSuccess("");
     try {
-      const res = await apiClient.post(`/organizations/${org.id}/members`, {
+      const res = await apiClient.post(`/organizations/${org.id}/members/`, {
         email: inviteEmail,
         role: inviteRole,
       });
@@ -153,7 +153,7 @@ function OrgCard({ org, currentUserId }: { org: any; currentUserId: string }) {
     if (!window.confirm("Are you sure you want to remove this member?")) return;
     try {
       await apiClient.delete(
-        `/organizations/${org.id}/members/${targetUserId}`,
+        `/organizations/${org.id}/members/${targetUserId}/`,
       );
       fetchMembers();
     } catch (err: any) {
@@ -164,7 +164,7 @@ function OrgCard({ org, currentUserId }: { org: any; currentUserId: string }) {
   const handleUpdateRole = async (targetUserId: string, newRole: string) => {
     try {
       await apiClient.patch(
-        `/organizations/${org.id}/members/${targetUserId}`,
+        `/organizations/${org.id}/members/${targetUserId}/`,
         { role: newRole },
       );
       fetchMembers();
@@ -487,9 +487,9 @@ export default function Organizations() {
     try {
       const [orgRes, meRes] = await Promise.all([
         apiClient.get("/organizations/"),
-        apiClient.get("/auth/me"),
+        apiClient.get("/auth/me/"),
       ]);
-      setOrgs(orgRes.data);
+      setOrgs(Array.isArray(orgRes.data) ? orgRes.data : []);
       setCurrentUserId(meRes.data.id);
     } catch (err) {
       console.error(err);

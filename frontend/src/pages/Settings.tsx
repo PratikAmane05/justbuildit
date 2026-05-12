@@ -24,7 +24,7 @@ export default function SettingsPage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await apiClient.get('/auth/me');
+      const res = await apiClient.get('/auth/me/');
       setName(res.data.name);
       setEmail(res.data.email);
     } catch (err: any) {
@@ -44,7 +44,7 @@ export default function SettingsPage() {
       const payload: any = { name, email };
       if (newPassword) payload.password = newPassword;
 
-      await apiClient.patch('/auth/me', payload);
+      await apiClient.patch('/auth/me/', payload);
       setSuccess('Profile updated successfully!');
       setNewPassword('');
     } catch (err: any) {

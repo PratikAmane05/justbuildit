@@ -31,6 +31,7 @@ class AIInsightsRequest(BaseModel):
     project: ProjectData
     tasks: List[TaskData]
 
+@router.get("/summary/")
 @router.get("/summary")
 async def analytics_summary(
     project_id: Optional[str] = None,
@@ -40,6 +41,7 @@ async def analytics_summary(
     svc = AnalyticsService(db)
     return await svc.get_summary(user_id=user_id, project_id=project_id)
 
+@router.get("/velocity/")
 @router.get("/velocity")
 async def velocity(
     weeks: int = 7,
