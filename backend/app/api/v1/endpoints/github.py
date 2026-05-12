@@ -18,7 +18,7 @@ from typing import Optional
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -216,7 +216,7 @@ async def get_github_status(
         "repo_name": integration.repo_name,
         "repo_url": integration.repo_url,
         "is_active": integration.is_active,
-        "connected_at": integration.created_at,
+        "connected_at": integration.created_at.isoformat() if integration.created_at else None,
         "events": [
             {
                 "type": e.event_type,
@@ -225,7 +225,7 @@ async def get_github_status(
                 "branch": e.branch,
                 "pr_number": e.pr_number,
                 "sha": e.sha[:7] if e.sha else None,
-                "created_at": e.created_at,
+                "created_at": e.created_at.isoformat() if e.created_at else None,
             }
             for e in events
         ],
@@ -245,6 +245,7 @@ async def disconnect_github_repo(
     )
     integration = result.scalar_one_or_none()
     if integration:
+        await db.execute(delete(GitHubEvent).where(GitHubEvent.integration_id == integration.id))
         await db.delete(integration)
         await db.commit()
 
@@ -354,11 +355,13 @@ async def get_github_analytics(
     hdrs = _gh_headers(integration.access_token)
 
     async def _get(client: httpx.AsyncClient, path: str, params: dict = None):
-        r = await client.get(f"{GH_API}{path}", headers=hdrs, params=params or {})
-        if r.status_code in (404, 403):
+        try:
+            r = await client.get(f"{GH_API}{path}", headers=hdrs, params=params or {})
+            if r.status_code != 200:
+                return None
+            return r.json()
+        except Exception:
             return None
-        r.raise_for_status()
-        return r.json()
 
     async with httpx.AsyncClient(timeout=20.0) as client:
         (
@@ -373,14 +376,13 @@ async def get_github_analytics(
         ) = await asyncio.gather(
             _get(client, f"/repos/{owner}/{repo}"),
             _get(client, f"/repos/{owner}/{repo}/commits",
-                 {"per_page": 100, "since": (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()}),
+                 {"per_page": 100, "since": (datetime.now(timezone.utc) - timedelta(days=90)).strftime("%Y-%m-%dT%H:%M:%SZ")}),
             _get(client, f"/repos/{owner}/{repo}/pulls",   {"state": "all", "per_page": 100}),
             _get(client, f"/repos/{owner}/{repo}/issues",  {"state": "all", "per_page": 100, "filter": "all"}),
             _get(client, f"/repos/{owner}/{repo}/contributors", {"per_page": 10}),
             _get(client, f"/repos/{owner}/{repo}/languages"),
             _get(client, f"/repos/{owner}/{repo}/branches",    {"per_page": 50}),
             _get(client, f"/repos/{owner}/{repo}/releases",    {"per_page": 5}),
-            return_exceptions=True,
         )
 
     # ── Repo overview ──────────────────────────────────────────────────────────

@@ -127,7 +127,7 @@ export default function GitHubPanel({ projectId }: { projectId: string }) {
   };
 
   const handleDisconnect = async () => {
-    if (!confirm(`Disconnect ${status?.repo_name}? This won't affect your GitHub repo.`)) return;
+    if (!window.confirm(`Disconnect ${status?.repo_name}? This won't affect your GitHub repo.`)) return;
     try {
       await apiClient.delete(`/github/disconnect/${projectId}`);
       setStatus({ connected: false });

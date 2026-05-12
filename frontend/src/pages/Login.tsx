@@ -44,7 +44,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await apiClient.post("/auth/login", { email, password });
+      const response = await apiClient.post("/auth/login/", { email, password });
       localStorage.setItem("access_token", response.data.access_token);
       if (response.data.refresh_token) {
         localStorage.setItem("refresh_token", response.data.refresh_token);

@@ -39,7 +39,7 @@ async def create_project(
     return await svc.create(payload, owner_id=user_id)
 
 
-@router.get("/{project_id}", response_model=ProjectOut)
+@router.get("/{project_id}/", response_model=ProjectOut)
 async def get_project(
     project_id: str,
     db: AsyncSession = Depends(get_db),
@@ -52,7 +52,7 @@ async def get_project(
     return project
 
 
-@router.put("/{project_id}", response_model=ProjectOut)
+@router.patch("/{project_id}/", response_model=ProjectOut)
 async def update_project(
     project_id: str,
     payload: ProjectUpdate,
@@ -63,7 +63,7 @@ async def update_project(
     return await svc.update(project_id, payload)
 
 
-@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{project_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
     project_id: str,
     db: AsyncSession = Depends(get_db),

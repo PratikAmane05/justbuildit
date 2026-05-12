@@ -144,7 +144,7 @@ export default function ProjectDetail() {
         apiClient.get(`/tasks/?project_id=${id}`),
       ]);
       setProject(pRes.data);
-      setTasks(tRes.data);
+      setTasks(Array.isArray(tRes.data) ? tRes.data : []);
     } catch {
       navigate("/projects");
     } finally {
@@ -259,6 +259,20 @@ export default function ProjectDetail() {
     }
   };
 
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
+  const handleDeleteProject = async () => {
+    if (!window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) return;
+    setIsDeletingProject(true);
+    try {
+      await apiClient.delete(`/projects/${id}`);
+      navigate('/projects');
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || "Failed to delete project");
+    } finally {
+      setIsDeletingProject(false);
+    }
+  };
+
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   const confirmDeleteTask = async () => {
@@ -276,6 +290,15 @@ export default function ProjectDetail() {
     try {
       const res = await apiClient.patch(`/tasks/${taskId}/status`, {
         status: newStatus,
+      });
+      setTasks(tasks.map((t) => (t.id === taskId ? res.data : t)));
+    } catch {}
+  };
+
+  const handleUpdateAssignee = async (taskId: string, newAssignee: string) => {
+    try {
+      const res = await apiClient.put(`/tasks/${taskId}`, {
+        assigned_to: newAssignee || null,
       });
       setTasks(tasks.map((t) => (t.id === taskId ? res.data : t)));
     } catch {}
@@ -933,7 +956,6 @@ export default function ProjectDetail() {
                                 </div>
                               </div>
 
-                              {/* Status quick-change */}
                               <select
                                 value={task.status}
                                 onChange={(e) =>
@@ -944,6 +966,20 @@ export default function ProjectDetail() {
                                 {STATUSES.map((st) => (
                                   <option key={st} value={st}>
                                     {st.replace(/_/g, " ")}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                value={task.assigned_to || ""}
+                                onChange={(e) =>
+                                  handleUpdateAssignee(task.id, e.target.value)
+                                }
+                                className="mt-2 w-full text-[11px] font-medium bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5 text-gray-600 cursor-pointer focus:outline-none"
+                              >
+                                <option value="">Unassigned</option>
+                                {orgMembers.map((m: any) => (
+                                  <option key={m.user_id} value={m.user_id}>
+                                    {m.name || m.email}
                                   </option>
                                 ))}
                               </select>
@@ -995,6 +1031,31 @@ export default function ProjectDetail() {
                     Save Changes
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+
+            <Card className="sleek-card border-red-200 mt-6">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-red-600 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" /> Danger Zone
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Permanently delete this project and all its tasks, connections, and data. This action cannot be undone.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleDeleteProject}
+                    disabled={isDeletingProject}
+                    className="bg-red-600 hover:bg-red-700 text-white gap-2 mt-2"
+                  >
+                    {isDeletingProject ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    {isDeletingProject ? "Deleting..." : "Delete Project"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

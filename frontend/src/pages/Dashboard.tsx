@@ -53,23 +53,37 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [meRes, summaryRes, projectsRes, tasksRes] = await Promise.all([
-          apiClient.get("/auth/me"),
-          apiClient.get("/analytics/summary"),
-          apiClient.get("/projects/"),
-          apiClient.get("/tasks/"),
-        ]);
+        // Fetch user info first
+        const meRes = await apiClient.get("/auth/me/");
         setUser(meRes.data);
-        setSummary(summaryRes.data);
-        setProjects(projectsRes.data);
-        setTasks(tasksRes.data);
-        // keep navbar cache fresh
         localStorage.setItem("nav_user", JSON.stringify(meRes.data));
       } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+        console.error("Failed to load user:", err);
       }
+
+      // Fetch remaining data independently so one failure doesn't block others
+      try {
+        const summaryRes = await apiClient.get("/analytics/summary");
+        setSummary(summaryRes.data);
+      } catch (err) {
+        console.error("Failed to load analytics:", err);
+      }
+
+      try {
+        const projectsRes = await apiClient.get("/projects/");
+        setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
+      } catch (err) {
+        console.error("Failed to load projects:", err);
+      }
+
+      try {
+        const tasksRes = await apiClient.get("/tasks/");
+        setTasks(Array.isArray(tasksRes.data) ? tasksRes.data : []);
+      } catch (err) {
+        console.error("Failed to load tasks:", err);
+      }
+
+      setLoading(false);
     }
     fetchData();
   }, []);

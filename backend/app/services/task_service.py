@@ -79,32 +79,33 @@ class TaskService:
         await self.db.refresh(task)
 
         if task.assigned_to:
-            import asyncio
-            asyncio.create_task(self._notify_assignment(task))
+            try:
+                from app.models.user import User
+                res = await self.db.execute(select(User).where(User.id == task.assigned_to))
+                assignee = res.scalar_one_or_none()
+                pres = await self.db.execute(select(Project).where(Project.id == task.project_id))
+                proj = pres.scalar_one_or_none()
+
+                if assignee and assignee.email:
+                    import asyncio
+                    email_str = assignee.email
+                    proj_name = proj.name if proj else "Project"
+                    asyncio.create_task(self._notify_assignment(email_str, task.title, proj_name))
+            except Exception:
+                pass
 
         return task
 
-    async def _notify_assignment(self, task: Task):
+    async def _notify_assignment(self, email: str, task_title: str, proj_name: str):
         try:
-            from app.core.email import notify_task_assigned
-            from app.models.user import User
-            from app.models.project import Project
-            
-            res = await self.db.execute(select(User).where(User.id == task.assigned_to))
-            assignee = res.scalar_one_or_none()
-            
-            pres = await self.db.execute(select(Project).where(Project.id == task.project_id))
-            proj = pres.scalar_one_or_none()
-            
-            # Since we don't have the current "assigner" passed in easily, we use a generic reference
-            if assignee and assignee.email:
-                await notify_task_assigned(
-                    assignee.email, 
-                    task.title, 
-                    proj.name if proj else "Project", 
-                    "A team member"
-                )
-        except:
+            from app.core.email import notify_task_created
+            await notify_task_created(
+                email, 
+                task_title, 
+                proj_name, 
+                "A team member"
+            )
+        except Exception:
             pass
 
 
@@ -115,15 +116,27 @@ class TaskService:
             raise HTTPException(status_code=404, detail="Task not found")
         
         old_assignee = task.assigned_to
-        for field, value in payload.model_dump(exclude_none=True).items():
+        for field, value in payload.model_dump(exclude_unset=True).items():
             setattr(task, field, value)
         
         await self.db.commit()
         await self.db.refresh(task)
 
         if task.assigned_to and task.assigned_to != old_assignee:
-            import asyncio
-            asyncio.create_task(self._notify_assignment(task))
+            try:
+                from app.models.user import User
+                res = await self.db.execute(select(User).where(User.id == task.assigned_to))
+                assignee = res.scalar_one_or_none()
+                pres = await self.db.execute(select(Project).where(Project.id == task.project_id))
+                proj = pres.scalar_one_or_none()
+
+                if assignee and assignee.email:
+                    import asyncio
+                    email_str = assignee.email
+                    proj_name = proj.name if proj else "Project"
+                    asyncio.create_task(self._notify_assignment(email_str, task.title, proj_name))
+            except Exception:
+                pass
 
         return task
 
@@ -171,6 +184,26 @@ class TaskService:
         except Exception:
             import logging
             logging.getLogger(__name__).warning("Failed to write activity log for status change")
+
+        try:
+            from app.core.email import notify_task_status_updated
+            from app.models.user import User
+            # Send notification to assignee if it's assigned to someone
+            if task.assigned_to:
+                res = await self.db.execute(select(User).where(User.id == task.assigned_to))
+                assignee = res.scalar_one_or_none()
+                if assignee and assignee.email:
+                    # Best effort to fetch updater name
+                    updater_name = "A team member"
+                    if user_id:
+                        updater_res = await self.db.execute(select(User).where(User.id == user_id))
+                        updater = updater_res.scalar_one_or_none()
+                        if updater:
+                            updater_name = updater.name
+
+                    await notify_task_status_updated(assignee.email, task.title, status, updater_name)
+        except Exception:
+            pass
 
         await self.db.commit()
         await self.db.refresh(task)

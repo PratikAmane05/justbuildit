@@ -101,5 +101,12 @@ class AuthService:
             
         await self.db.commit()
         await self.db.refresh(user)
+
+        try:
+            from app.core.email import notify_profile_updated
+            await notify_profile_updated(user.email, user.name)
+        except Exception:
+            pass
+
         return user
 

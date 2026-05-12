@@ -91,7 +91,9 @@ export default function Tasks() {
   const [taskStatus, setTaskStatus] = useState("TODO");
   const [taskProject, setTaskProject] = useState("");
   const [taskEstimate, setTaskEstimate] = useState("");
+  const [taskAssignee, setTaskAssignee] = useState("");
   const [createError, setCreateError] = useState("");
+  const [orgMembers, setOrgMembers] = useState<any[]>([]);
 
   // AI Generate
   const [aiOpen, setAiOpen] = useState(false);
@@ -128,8 +130,8 @@ export default function Tasks() {
         apiClient.get("/tasks/"),
         apiClient.get("/projects/"),
       ]);
-      setTasks(tRes.data);
-      setProjects(pRes.data);
+      setTasks(Array.isArray(tRes.data) ? tRes.data : []);
+      setProjects(Array.isArray(pRes.data) ? pRes.data : []);
       if (pRes.data.length > 0) {
         setTaskProject(pRes.data[0].id);
         setAiProject(pRes.data[0].id);
@@ -145,6 +147,18 @@ export default function Tasks() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const proj = projects.find((p) => p.id === taskProject);
+    if (proj?.organization_id) {
+      apiClient
+        .get(`/organizations/${proj.organization_id}/members`)
+        .then((res) => setOrgMembers(res.data))
+        .catch(() => setOrgMembers([]));
+    } else {
+      setOrgMembers([]);
+    }
+  }, [taskProject, projects]);
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskProject) return;
@@ -158,6 +172,7 @@ export default function Tasks() {
         status: taskStatus,
         estimated_time: taskEstimate ? parseFloat(taskEstimate) : null,
         project_id: taskProject,
+        assigned_to: taskAssignee || null,
       });
       setCreateOpen(false);
       setTaskTitle("");
@@ -165,6 +180,7 @@ export default function Tasks() {
       setTaskPriority("MEDIUM");
       setTaskStatus("TODO");
       setTaskEstimate("");
+      setTaskAssignee("");
       fetchData();
     } catch (err: any) {
       setCreateError(err?.response?.data?.detail || "Failed to create task");
@@ -651,6 +667,21 @@ export default function Tasks() {
                       placeholder="e.g. 3"
                       className="sleek-input"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Assignee</Label>
+                    <select
+                      value={taskAssignee}
+                      onChange={(e) => setTaskAssignee(e.target.value)}
+                      className="w-full h-10 rounded-md border border-gray-200 px-3 text-sm bg-white focus:ring-2 focus:ring-gray-900 outline-none"
+                    >
+                      <option value="">Unassigned</option>
+                      {orgMembers.map((m: any) => (
+                        <option key={m.user_id} value={m.user_id}>
+                          {m.name || m.email}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   {createError && (
                     <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">

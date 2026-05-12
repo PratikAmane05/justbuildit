@@ -38,7 +38,7 @@ async def create_organization(
     return await svc.create(payload, owner_id=user_id)
 
 
-@router.get("/{org_id}", response_model=OrganizationOut)
+@router.get("/{org_id}/", response_model=OrganizationOut)
 async def get_organization(
     org_id: str,
     db: AsyncSession = Depends(get_db),
@@ -51,7 +51,7 @@ async def get_organization(
     return org
 
 
-@router.put("/{org_id}", response_model=OrganizationOut)
+@router.put("/{org_id}/", response_model=OrganizationOut)
 async def update_organization(
     org_id: str,
     payload: OrganizationUpdate,
@@ -66,7 +66,7 @@ async def update_organization(
     return await svc.update(org_id, payload)
 
 
-@router.delete("/{org_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{org_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_organization(
     org_id: str,
     db: AsyncSession = Depends(get_db),
@@ -79,7 +79,7 @@ async def delete_organization(
     await svc.delete(org_id)
 
 
-@router.get("/{org_id}/members", response_model=List[MemberDetailOut])
+@router.get("/{org_id}/members/", response_model=List[MemberDetailOut])
 async def list_members(
     org_id: str,
     db: AsyncSession = Depends(get_db),
@@ -102,7 +102,7 @@ class UpdateMemberRoleRequest(BaseModel):
 
 
 
-@router.post("/{org_id}/members", response_model=MemberDetailOut, status_code=status.HTTP_201_CREATED)
+@router.post("/{org_id}/members/", response_model=MemberDetailOut, status_code=status.HTTP_201_CREATED)
 async def add_member(
     org_id: str,
     payload: AddMemberRequest,
@@ -127,7 +127,7 @@ async def add_member(
     return await svc.add_member_by_email(org_id, payload.email, payload.role)
 
 
-@router.get("/{org_id}/my-role")
+@router.get("/{org_id}/my-role/")
 async def my_role_in_org(
     org_id: str,
     db: AsyncSession = Depends(get_db),
@@ -138,7 +138,7 @@ async def my_role_in_org(
     role = await svc.get_user_role(org_id, user_id)
     return {"role": role, "can_manage_members": role in CAN_MANAGE_MEMBERS}
 
-@router.patch("/{org_id}/members/{member_user_id}", response_model=MemberDetailOut)
+@router.patch("/{org_id}/members/{member_user_id}/", response_model=MemberDetailOut)
 async def update_member_role(
     org_id: str,
     member_user_id: str,
@@ -158,7 +158,7 @@ async def update_member_role(
         
     return await svc.update_member_role(org_id, member_user_id, payload.role)
 
-@router.delete("/{org_id}/members/{member_user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{org_id}/members/{member_user_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_member(
     org_id: str,
     member_user_id: str,

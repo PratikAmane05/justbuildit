@@ -27,3 +27,20 @@ def send_due_date_reminders():
     """Check for tasks due today/tomorrow and send reminders."""
     logger.info("Checking due date reminders...")
     # TODO: query upcoming due tasks, send notifications
+
+
+@celery_app.task(bind=True, max_retries=3)
+def send_email_task(self, to_email: str, subject: str, body: str, is_html: bool = True):
+    """
+    Background task to send an email. 
+    Retries up to 3 times in case of temporary SMTP network failures.
+    """
+    from app.services.email_service import EmailService
+    try:
+        logger.info(f"Preparing to send email to {to_email}")
+        success = EmailService.send_email_sync(to_email, subject, body, is_html)
+        if not success:
+            raise Exception("SMTP failed to send email. Check logs.")
+    except Exception as exc:
+        logger.error(f"Email failed: {exc}")
+        raise self.retry(exc=exc, countdown=60)

@@ -49,8 +49,8 @@ export default function Projects() {
         apiClient.get("/projects/"),
         apiClient.get("/organizations/"),
       ]);
-      setProjects(pRes.data);
-      setOrgs(oRes.data);
+      setProjects(Array.isArray(pRes.data) ? pRes.data : []);
+      setOrgs(Array.isArray(oRes.data) ? oRes.data : []);
       if (oRes.data.length > 0 && !selectedOrgId) {
         setSelectedOrgId(oRes.data[0].id);
       }
