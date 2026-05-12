@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -35,6 +36,7 @@ function App() {
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/docs" element={<DocumentationPage />} />
         </Routes>
+        <Analytics />
       </div>
     </Router>
   );
