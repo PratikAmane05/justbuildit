@@ -140,7 +140,7 @@ export default function ProjectDetail() {
     setLoading(true);
     try {
       const [pRes, tRes] = await Promise.all([
-        apiClient.get(`/projects/${id}`),
+        apiClient.get(`/projects/${id}/`),
         apiClient.get(`/tasks/?project_id=${id}`),
       ]);
       setProject(pRes.data);
