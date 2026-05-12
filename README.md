@@ -21,7 +21,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Build by Suraj Bayas
+Built by PratikAmane05
 
 | Service      | URL                      |
 |--------------|--------------------------|
